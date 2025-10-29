@@ -8,85 +8,89 @@ namespace LibraryManagementSystem.Controllers
     [Route("api/[controller]")]
     public class AuthorsController : ControllerBase
     {
-        private readonly DataService _dataService;
+        private readonly IAuthorService _authorService;
 
-        public AuthorsController(DataService dataService)
+        public AuthorsController(IAuthorService authorService)
         {
-            _dataService = dataService;
+            _authorService = authorService;
         }
 
         [HttpGet]
-        public IActionResult GetAllAuthors()
+        public async Task<ActionResult<IEnumerable<Author>>> GetAllAuthors()
         {
-            return Ok(_dataService.Authors);
+            var result = await _authorService.GetAllAuthorsAsync();
+            if (!result.IsSuccess)
+                return BadRequest(result.ErrorMessage);
+
+            return Ok(result.Data);
         }
 
         [HttpGet("{id}")]
-        public IActionResult GetAuthorById(int id)
+        public async Task<ActionResult<Author>> GetAuthorById(int id)
         {
-            var author = _dataService.Authors.FirstOrDefault(a => a.Id == id);
+            var result = await _authorService.GetAuthorByIdAsync(id);
+            if (!result.IsSuccess)
+                return NotFound(result.ErrorMessage);
 
-            if (author == null)
-            {
-                return NotFound($"Автор с ID {id} не найден");
-            }
+            return Ok(result.Data);
+        }
 
-            return Ok(author);
+        [HttpGet("search")]
+        public async Task<ActionResult<IEnumerable<Author>>> SearchAuthors([FromQuery] string name)
+        {
+            var result = await _authorService.SearchAuthorsAsync(name);
+            if (!result.IsSuccess)
+                return BadRequest(result.ErrorMessage);
+
+            return Ok(result.Data);
+        }
+
+        [HttpGet("name-starts-with")]
+        public async Task<ActionResult<IEnumerable<Author>>> GetAuthorsByNameStartsWith([FromQuery] string prefix)
+        {
+            var result = await _authorService.GetAuthorsByNameStartsWithAsync(prefix);
+            if (!result.IsSuccess)
+                return BadRequest(result.ErrorMessage);
+
+            return Ok(result.Data);
+        }
+
+        [HttpGet("with-book-count")]
+        public async Task<ActionResult<IEnumerable<object>>> GetAuthorsWithBookCount()
+        {
+            var result = await _authorService.GetAuthorsWithBookCountAsync();
+            if (!result.IsSuccess)
+                return BadRequest(result.ErrorMessage);
+
+            return Ok(result.Data);
         }
 
         [HttpPost]
-        public IActionResult CreateAuthor([FromBody] Author author)
+        public async Task<ActionResult<Author>> CreateAuthor([FromBody] Author author)
         {
-            if (string.IsNullOrWhiteSpace(author.Name))
-            {
-                return BadRequest("Имя автора обязательно");
-            }
+            var result = await _authorService.CreateAuthorAsync(author);
+            if (!result.IsSuccess)
+                return BadRequest(result.ErrorMessage);
 
-            author.Id = _dataService.GetNextAuthorId();
-
-            _dataService.Authors.Add(author);
-
-            return CreatedAtAction(nameof(GetAuthorById), new { id = author.Id }, author);
+            return CreatedAtAction(nameof(GetAuthorById), new { id = result.Data!.Id }, result.Data);
         }
 
         [HttpPut("{id}")]
-        public IActionResult UpdateAuthor(int id, [FromBody] Author updatedAuthor)
+        public async Task<IActionResult> UpdateAuthor(int id, [FromBody] Author author)
         {
-            var existingAuthor = _dataService.Authors.FirstOrDefault(a => a.Id == id);
-
-            if (existingAuthor == null)
-            {
-                return NotFound($"Автор с ID {id} не найден");
-            }
-
-            if (string.IsNullOrWhiteSpace(updatedAuthor.Name))
-            {
-                return BadRequest("Имя автора обязательно");
-            }
-
-            existingAuthor.Name = updatedAuthor.Name;
-            existingAuthor.DateOfBirth = updatedAuthor.DateOfBirth;
+            var result = await _authorService.UpdateAuthorAsync(id, author);
+            if (!result.IsSuccess)
+                return BadRequest(result.ErrorMessage);
 
             return NoContent();
         }
 
         [HttpDelete("{id}")]
-        public IActionResult DeleteAuthor(int id)
+        public async Task<IActionResult> DeleteAuthor(int id)
         {
-            var author = _dataService.Authors.FirstOrDefault(a => a.Id == id);
-
-            if (author == null)
-            {
-                return NotFound($"Автор с ID {id} не найден");
-            }
-
-            var authorBooks = _dataService.Books.Where(b => b.AuthorId == id).ToList();
-            if (authorBooks.Any())
-            {
-                return BadRequest("Нельзя удалить автора, у которого есть книги. Сначала удалите все книги автора.");
-            }
-
-            _dataService.Authors.Remove(author);
+            var result = await _authorService.DeleteAuthorAsync(id);
+            if (!result.IsSuccess)
+                return NotFound(result.ErrorMessage);
 
             return NoContent();
         }
