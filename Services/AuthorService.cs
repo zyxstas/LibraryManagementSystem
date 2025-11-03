@@ -14,133 +14,76 @@ namespace LibraryManagementSystem.Services
 
         public async Task<ServiceResult<IEnumerable<Author>>> GetAllAuthorsAsync()
         {
-            try
-            {
-                var authors = await _authorRepository.GetAllAsync();
-                return ServiceResult<IEnumerable<Author>>.Success(authors);
-            }
-            catch (Exception ex)
-            {
-                return ServiceResult<IEnumerable<Author>>.Failure($"Ошибка при получении авторов: {ex.Message}");
-            }
+            var authors = await _authorRepository.GetAllAsync();
+            return ServiceResult<IEnumerable<Author>>.Success(authors); 
         }
 
         public async Task<ServiceResult<Author>> GetAuthorByIdAsync(int id)
         {
-            try
-            {
-                var author = await _authorRepository.GetByIdAsync(id);
-                if (author == null)
-                    return ServiceResult<Author>.Failure($"Автор с ID {id} не найден");
+            var author = await _authorRepository.GetByIdAsync(id);
+            if (author == null)
+                return ServiceResult<Author>.Failure($"Автор с ID {id} не найден");
 
-                return ServiceResult<Author>.Success(author);
-            }
-            catch (Exception ex)
-            {
-                return ServiceResult<Author>.Failure($"Ошибка при получении автора: {ex.Message}");
-            }
+            return ServiceResult<Author>.Success(author);
         }
 
         public async Task<ServiceResult<IEnumerable<Author>>> SearchAuthorsAsync(string name)
         {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(name))
-                    return ServiceResult<IEnumerable<Author>>.Failure("Поисковый запрос не может быть пустым");
+            if (string.IsNullOrWhiteSpace(name))
+                return ServiceResult<IEnumerable<Author>>.Failure("Поисковый запрос не может быть пустым");
 
-                var authors = await _authorRepository.FindByNameAsync(name);
-                return ServiceResult<IEnumerable<Author>>.Success(authors);
-            }
-            catch (Exception ex)
-            {
-                return ServiceResult<IEnumerable<Author>>.Failure($"Ошибка при поиске авторов: {ex.Message}");
-            }
+            var authors = await _authorRepository.FindByNameAsync(name);
+            return ServiceResult<IEnumerable<Author>>.Success(authors);
         }
 
         public async Task<ServiceResult<IEnumerable<Author>>> GetAuthorsByNameStartsWithAsync(string prefix)
         {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(prefix))
-                    return ServiceResult<IEnumerable<Author>>.Failure("Префикс не может быть пустым");
+            if (string.IsNullOrWhiteSpace(prefix))
+                return ServiceResult<IEnumerable<Author>>.Failure("Префикс не может быть пустым");
 
-                var authors = await _authorRepository.FindByNameStartsWithAsync(prefix);
-                return ServiceResult<IEnumerable<Author>>.Success(authors);
-            }
-            catch (Exception ex)
-            {
-                return ServiceResult<IEnumerable<Author>>.Failure($"Ошибка при поиске авторов: {ex.Message}");
-            }
+            var authors = await _authorRepository.FindByNameStartsWithAsync(prefix);
+            return ServiceResult<IEnumerable<Author>>.Success(authors);
         }
 
         public async Task<ServiceResult<IEnumerable<object>>> GetAuthorsWithBookCountAsync()
         {
-            try
-            {
-                var authors = await _authorRepository.GetAuthorsWithBookCountAsync();
-                return ServiceResult<IEnumerable<object>>.Success(authors);
-            }
-            catch (Exception ex)
-            {
-                return ServiceResult<IEnumerable<object>>.Failure($"Ошибка при получении авторов: {ex.Message}");
-            }
+            var authors = await _authorRepository.GetAuthorsWithBookCountAsync();
+            return ServiceResult<IEnumerable<object>>.Success(authors);
         }
 
         public async Task<ServiceResult<Author>> CreateAuthorAsync(Author author)
         {
-            try
-            {
-                // ВАЛИДАЦИЯ
-                var validationResult = ValidateAuthor(author);
-                if (!validationResult.IsValid)
-                    return ServiceResult<Author>.Failure(validationResult.ErrorMessage);
+            var validationResult = ValidateAuthor(author);
+            if (!validationResult.IsValid)
+                return ServiceResult<Author>.Failure(validationResult.ErrorMessage);
 
-                var createdAuthor = await _authorRepository.CreateAsync(author);
-                return ServiceResult<Author>.Success(createdAuthor);
-            }
-            catch (Exception ex)
-            {
-                return ServiceResult<Author>.Failure($"Ошибка при создании автора: {ex.Message}");
-            }
+            var createdAuthor = await _authorRepository.CreateAsync(author);
+            return ServiceResult<Author>.Success(createdAuthor);
         }
 
         public async Task<ServiceResult<Author>> UpdateAuthorAsync(int id, Author author)
         {
-            try
-            {
-                if (id != author.Id)
-                    return ServiceResult<Author>.Failure("ID в URL не совпадает с ID в теле запроса");
+            if (id != author.Id)
+                return ServiceResult<Author>.Failure("ID в URL не совпадает с ID в теле запроса");
 
-                var validationResult = ValidateAuthor(author);
-                if (!validationResult.IsValid)
-                    return ServiceResult<Author>.Failure(validationResult.ErrorMessage);
+            var validationResult = ValidateAuthor(author);
+            if (!validationResult.IsValid)
+                return ServiceResult<Author>.Failure(validationResult.ErrorMessage);
 
-                var updatedAuthor = await _authorRepository.UpdateAsync(author);
-                if (updatedAuthor == null)
-                    return ServiceResult<Author>.Failure($"Автор с ID {id} не найден");
+            var updatedAuthor = await _authorRepository.UpdateAsync(author);
+            if (updatedAuthor == null)
+                return ServiceResult<Author>.Failure($"Автор с ID {id} не найден");
 
-                return ServiceResult<Author>.Success(updatedAuthor);
-            }
-            catch (Exception ex)
-            {
-                return ServiceResult<Author>.Failure($"Ошибка при обновлении автора: {ex.Message}");
-            }
+            return ServiceResult<Author>.Success(updatedAuthor);
         }
 
         public async Task<ServiceResult<bool>> DeleteAuthorAsync(int id)
         {
-            try
-            {
-                var deleted = await _authorRepository.DeleteAsync(id);
-                if (!deleted)
-                    return ServiceResult<bool>.Failure($"Автор с ID {id} не найден");
+            var deleted = await _authorRepository.DeleteAsync(id);
+            if (!deleted)
+                return ServiceResult<bool>.Failure($"Автор с ID {id} не найден");
 
-                return ServiceResult<bool>.Success(true);
-            }
-            catch (Exception ex)
-            {
-                return ServiceResult<bool>.Failure($"Ошибка при удалении автора: {ex.Message}");
-            }
+            return ServiceResult<bool>.Success(true);
         }
 
         private (bool IsValid, string ErrorMessage) ValidateAuthor(Author author)
